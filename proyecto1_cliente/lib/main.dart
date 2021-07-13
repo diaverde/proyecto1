@@ -1,10 +1,8 @@
-import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
-import 'package:proyecto1_cliente/modelos.dart';
 import 'package:proyecto1_cliente/allBuyers.dart';
+import 'package:proyecto1_cliente/singleBuyer.dart';
 
 void main() => runApp(MyApp());
 
@@ -87,6 +85,7 @@ class _HomePageState extends State<HomePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
+                // Texto de instrucción y fecha escogida
                 Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: SizedBox(
@@ -104,6 +103,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                 ),
+                // Botones de selección de fecha y sincronización
                 Container(
                   margin: const EdgeInsets.all(10),
                   alignment: Alignment.centerRight,
@@ -113,8 +113,8 @@ class _HomePageState extends State<HomePage> {
                         onPressed: () async {
                           final DateTime? picked = await showDatePicker(
                               context: context,
-                              initialDate: DateTime(2021, 1),
-                              firstDate: DateTime(2021, 1),
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2021, 7),
                               lastDate: DateTime(2021, 8));
                           if (picked != null) {
                             setState(() {
@@ -140,14 +140,12 @@ class _HomePageState extends State<HomePage> {
                                 'No ha seleccionado una fecha', context);
                           } else {
                             final unixDate =
-                                ((selectedDate!.millisecondsSinceEpoch) *
-                                        0.001)
+                                ((selectedDate!.millisecondsSinceEpoch) * 0.001)
                                     .round();
                             print(unixDate);
                             final result = await synchronize(unixDate);
                             if (result) {
-                              showSnackbar(
-                                'Datos sincronizados', context);
+                              showSnackbar('Datos sincronizados', context);
                             }
                           }
                         },
@@ -190,9 +188,9 @@ class _HomePageState extends State<HomePage> {
                   child: ElevatedButton(
                     onPressed: () {
                       Navigator.push(
-    context,
-    MaterialPageRoute(builder: (context) => BuyersPage()),
-  );
+                        context,
+                        MaterialPageRoute(builder: (context) => BuyersPage()),
+                      );
                     },
                     child: const Text(
                       'Listar compradores',
@@ -235,9 +233,16 @@ class _HomePageState extends State<HomePage> {
                   margin: const EdgeInsets.all(10),
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
-                    onPressed: () async {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BuyerInfoPage(),
+                        ),
+                      );
+                    },
                     child: const Text(
-                      'Sincronizar',
+                      'Obtener datos\ndel usuario',
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -263,26 +268,6 @@ Future<bool> synchronize(int unixTime) async {
     } else {
       return false;
     }
-  } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
-    throw Exception('Falla al cargar compradores');
-  }
-}
-
-// Función para obtener datos de un comprador
-Future<Buyer> fetchBuyer(String buyerID) async {
-  final url = 'https://damn.loca.lt/buyers/';
-  final response = await http.get(Uri.parse(url + buyerID));
-  print(response.body);
-
-  final respons = '[{"id": "666", "name": "John Connor", "age": 23}]';
-
-  if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
-    //return Buyer.fromJson(json.decode(response.body));
-    return Buyer.fromJson(json.decode(respons)[0]);
   } else {
     // If the server did not return a 200 OK response,
     // then throw an exception.
