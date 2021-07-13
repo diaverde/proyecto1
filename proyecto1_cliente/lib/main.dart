@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
 import 'package:proyecto1_cliente/modelos.dart';
+import 'package:proyecto1_cliente/allBuyers.dart';
 
 void main() => runApp(MyApp());
 
@@ -33,6 +34,8 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  DateTime? selectedDate;
+
   @override
   void initState() {
     super.initState();
@@ -72,8 +75,6 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ),
-          // Datos del comprador
-          BuyerData(),
           // Sincronización de fecha
           Container(
             alignment: Alignment.bottomCenter,
@@ -86,37 +87,76 @@ class _HomePageState extends State<HomePage> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Padding(
+                Padding(
                   padding: EdgeInsets.symmetric(horizontal: 10),
                   child: SizedBox(
                     width: 150,
-                    child: Text(
-                      'Sincroniza fecha para obtener la información',
-                      textAlign: TextAlign.left,
+                    child: Column(
+                      children: [
+                        Text(
+                          'Sincroniza fecha para obtener la información\n',
+                          textAlign: TextAlign.left,
+                        ),
+                        Text(selectedDate != null
+                            ? selectedDate!.toLocal().toString().split(' ')[0]
+                            : ''),
+                      ],
                     ),
                   ),
                 ),
                 Container(
                   margin: const EdgeInsets.all(10),
                   alignment: Alignment.centerRight,
-                  child: ElevatedButton(
-                    onPressed: () async {
-                      final DateTime? picked = await showDatePicker(
-                          context: context,
-                          initialDate: DateTime(2015, 9),
-                          firstDate: DateTime(2015, 8),
-                          lastDate: DateTime(2021));
-                      if (picked != null) {
-                        setState(() {
-                          //selectedDate = picked;
-                        });
-                        print(picked);
-                      }
-                    },
-                    child: const Text(
-                      'Sincronizar',
-                      textAlign: TextAlign.center,
-                    ),
+                  child: Column(
+                    children: [
+                      ElevatedButton(
+                        onPressed: () async {
+                          final DateTime? picked = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime(2021, 1),
+                              firstDate: DateTime(2021, 1),
+                              lastDate: DateTime(2021, 8));
+                          if (picked != null) {
+                            setState(() {
+                              selectedDate = picked;
+                            });
+                            print(picked);
+                          }
+                        },
+                        child: const Text(
+                          'Seleccionar fecha',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          primary: selectedDate == null
+                              ? Colors.grey
+                              : Colors.purple,
+                        ),
+                        onPressed: () async {
+                          if (selectedDate == null) {
+                            showSnackbar(
+                                'No ha seleccionado una fecha', context);
+                          } else {
+                            final unixDate =
+                                ((selectedDate!.millisecondsSinceEpoch) *
+                                        0.001)
+                                    .round();
+                            print(unixDate);
+                            final result = await synchronize(unixDate);
+                            if (result) {
+                              showSnackbar(
+                                'Datos sincronizados', context);
+                            }
+                          }
+                        },
+                        child: const Text(
+                          'Sincronizar',
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -148,7 +188,12 @@ class _HomePageState extends State<HomePage> {
                   margin: const EdgeInsets.all(10),
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
-                    onPressed: () async {},
+                    onPressed: () {
+                      Navigator.push(
+    context,
+    MaterialPageRoute(builder: (context) => BuyersPage()),
+  );
+                    },
                     child: const Text(
                       'Listar compradores',
                       textAlign: TextAlign.center,
@@ -206,61 +251,32 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class BuyerData extends StatefulWidget {
-  BuyerData({Key? key}) : super(key: key);
+// Función para sincronizar base de datos
+Future<bool> synchronize(int unixTime) async {
+  final url = 'https://damn.loca.lt/sync/?date=';
+  final response = await http.get(Uri.parse(url + unixTime.toString()));
+  print(response.body);
 
-  @override
-  _BuyerDataState createState() => _BuyerDataState();
-}
-
-class _BuyerDataState extends State<BuyerData> {
-  Future<Buyer>? futureBuyers;
-
-  @override
-  void initState() {
-    super.initState();
-    futureBuyers = fetchBuyers();
-  }
-
-  Widget titleSection = Container(
-    padding: const EdgeInsets.all(20),
-    child: Text(
-      'Los datos del usuario son:',
-      style: TextStyle(
-        fontWeight: FontWeight.bold,
-      ),
-    ),
-  );
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: FutureBuilder<Buyer>(
-        future: futureBuyers,
-        builder: (context, snapshot) {
-          if (snapshot.hasData) {
-            return Column(children: [
-              titleSection,
-              Text("Id: " + snapshot.data!.id!),
-              Text("Nombre: " + snapshot.data!.name!),
-              Text("Edad: " + snapshot.data!.age.toString()),
-            ]);
-          } else if (snapshot.hasError) {
-            return Text("${snapshot.error}");
-          }
-
-          // By default, show a loading spinner.
-          return CircularProgressIndicator();
-        },
-      ),
-    );
+  if (response.statusCode == 200) {
+    if (response.body.contains('Ok')) {
+      return true;
+    } else {
+      return false;
+    }
+  } else {
+    // If the server did not return a 200 OK response,
+    // then throw an exception.
+    throw Exception('Falla al cargar compradores');
   }
 }
 
-Future<Buyer> fetchBuyers() async {
-  final response = await http.get(Uri.parse('http://www.haztudron.com'));
+// Función para obtener datos de un comprador
+Future<Buyer> fetchBuyer(String buyerID) async {
+  final url = 'https://damn.loca.lt/buyers/';
+  final response = await http.get(Uri.parse(url + buyerID));
+  print(response.body);
 
-  final respons = '[{"Id": "666", "Name": "John Connor", "Age": 23}]';
+  final respons = '[{"id": "666", "name": "John Connor", "age": 23}]';
 
   if (response.statusCode == 200) {
     // If the server did return a 200 OK response,
