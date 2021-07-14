@@ -37,7 +37,7 @@ class Product {
   String? name;
 
   /// Edad del comprador
-  double? price;
+  num? price;
 
   /// Constructor
   Product({this.id, this.name, this.price});
@@ -83,7 +83,9 @@ class Transaction {
         buyerId = json['buyer_id'],
         ipAddress = json['ip_address'],
         device = json['device'],
-        productIds = json['product_ids'];
+        productIds = (json['product_ids'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList();
 
   /// Convertir de clase a json
   Map<String, dynamic> toJson() => {
@@ -122,11 +124,21 @@ class BuyerInfo {
 
   /// Convertir de json a clase
   BuyerInfo.fromJson(Map<String, dynamic> json)
-      : buyerData = json['buyer_data'],
-        prodData = json['prod_data'],
-        transData = json['trans_data'],
-        otherBuyersData = json['other_buyers_data'],
-        otherProdData = json['other_prod_data'];
+      : buyerData = (json['buyer_data'] as List<dynamic>?)
+            ?.map((e) => Buyer.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        prodData = (json['prod_data'] as List<dynamic>?)
+            ?.map((e) => Product.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        transData = (json['trans_data'] as List<dynamic>?)
+            ?.map((e) => Transaction.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        otherBuyersData = (json['other_buyers_data'] as List<dynamic>?)
+            ?.map((e) => Buyer.fromJson(e as Map<String, dynamic>))
+            .toList(),
+        otherProdData = (json['other_prod_data'] as List<dynamic>?)
+            ?.map((e) => Product.fromJson(e as Map<String, dynamic>))
+            .toList();
 
   /// Convertir de clase a json
   Map<String, dynamic> toJson() => {

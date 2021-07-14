@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -20,7 +19,7 @@ class _BuyerInfoPageState extends State<BuyerInfoPage> {
   @override
   void initState() {
     super.initState();
-    futureBuyerData = fetchBuyer('666');
+    futureBuyerData = fetchBuyer('e5fbad2f');
   }
 
   @override
@@ -158,10 +157,10 @@ class _BuyerInfoPageState extends State<BuyerInfoPage> {
 
 // Función para obtener datos de un comprador
 Future<BuyerInfo>? fetchBuyer(String buyerID) async {
-  //final url = 'https://damn.loca.lt/buyers/';
-  final url = 'http://www.haztudron.com/';
-  //final response = await http.get(Uri.parse(url + buyerID));
-  final response = await http.get(Uri.parse(url));
+  final url = 'https://verde.loca.lt/buyers/';
+  //final url = 'http://www.haztudron.com/';
+  final response = await http.get(Uri.parse(url + buyerID));
+  //final response = await http.get(Uri.parse(url));
   print(response.body);
 
   final respons = '{'
@@ -184,7 +183,8 @@ Future<BuyerInfo>? fetchBuyer(String buyerID) async {
     // If the server did return a 200 OK response,
     // then parse the JSON.
     try {
-      return BuyerInfo.fromJson(json.decode(respons));
+      //return BuyerInfo.fromJson(json.decode(respons));
+      return BuyerInfo.fromJson(json.decode(response.body));
     } catch (e) {
       print(e);
       throw Exception('Falla al cargar comprador');

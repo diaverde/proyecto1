@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -10,8 +9,6 @@ import (
 )
 
 func main() {
-  boom := loadTransactions()
-  fmt.Println(boom)
   
   port := "5000"
 
@@ -29,6 +26,7 @@ func main() {
   })
 
   r.Mount("/buyers", buyersResource{}.Routes())
+  r.Mount("/sync", syncResource{}.Routes())
 
   log.Fatal(http.ListenAndServe(":" + port, r))
 }

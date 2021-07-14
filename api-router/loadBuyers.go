@@ -24,7 +24,7 @@ func loadBuyers() []Buyer {
         fmt.Println("Error cargando datos")
     }
     json.Unmarshal(content, &buyers)
-    fmt.Printf("Buyers : %+v", buyers)
+    //fmt.Printf("Buyers : %+v", buyers)
     
     // Agregar tipo
     for i := range buyers {

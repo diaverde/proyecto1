@@ -6,9 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"strconv"
 	"strings"
-	"time"
 
 	"github.com/dgraph-io/dgo/v210"
 	"github.com/dgraph-io/dgo/v210/protos/api"
@@ -21,7 +19,6 @@ type buyersResource struct{}
 func (rs buyersResource) Routes() chi.Router {
   r := chi.NewRouter()
 
-  //r.Get("/", rs.GetbyDate)          // GET /buyers
   r.Get("/", rs.GetBuyers)    // GET /buyers
 
   r.Route("/{id}", func(r chi.Router) {
@@ -30,105 +27,6 @@ func (rs buyersResource) Routes() chi.Router {
   })
   
   return r
-}
-
-// Request Handler - GET /buyers - Return data depending on parameters
-func (rs buyersResource) GetbyDate(w http.ResponseWriter, r *http.Request) {
-  
-  // Estructura para decodificar datos recibidos
-  type Root struct {
-    DataOfDate []DateData `json:"data"`
-  }
-  
-  date := r.URL.Query().Get("date")
-  
-  if date != "" {
-
-    fmt.Println(date)
-    dateNum, err := strconv.ParseInt(date, 10, 64)
-    if err != nil {
-      fmt.Println("Error",err)
-      http.Error(w, err.Error(), http.StatusInternalServerError)
-      return
-    }
-    // Límites de tiempo para la búsqueda
-    unixTimeIni := time.Unix(dateNum, 0)
-    timeInRFC3339Ini := unixTimeIni.Format(time.RFC3339)
-    tIndex := strings.Index(timeInRFC3339Ini, "T")
-    timeInRFC3339Ini = timeInRFC3339Ini[:tIndex]
-    
-    unixTimeEnd := time.Unix(dateNum + 106400, 0) //86400
-    timeInRFC3339End := unixTimeEnd.Format(time.RFC3339)
-    tIndex = strings.Index(timeInRFC3339End, "T")
-    timeInRFC3339End = timeInRFC3339End[:tIndex]
-    
-    // Conexión a cliente Dgraph
-    conn, err := grpc.Dial("localhost:9080", grpc.WithInsecure())
-    if err != nil {
-      log.Fatal(err)
-      http.Error(w, err.Error(), http.StatusInternalServerError)
-      return
-    }
-    defer conn.Close()
-    dgraphClient := dgo.NewDgraphClient(api.NewDgraphClient(conn))    
-    ctx := context.Background()
-
-    // Armar la búsqueda
-    variables := map[string]string{"$mydate1": timeInRFC3339Ini, "$mydate2": timeInRFC3339End}
-    q := `
-      query MyQuery($mydate1: string, $mydate2: string){
-        data(func: has(date)) @filter(ge(date, $mydate1) AND lt(date, $mydate2)) {
-          buyers{
-            id
-            name
-            age
-          }
-        }
-      }
-    `
-
-    // Crear transacción
-    txn := dgraphClient.NewTxn()
-    defer txn.Discard(ctx)
-
-    res, err := txn.QueryWithVars(ctx, q, variables)
-    if err != nil {
-      log.Fatal(err)
-    }
-    //fmt.Printf("%s\n", res.Json)
-
-    var root Root
-    err = json.Unmarshal(res.Json, &root)
-    if err != nil {
-      log.Fatal(err)
-    }
-
-    // Si se obtuvo información del id indicado
-    buyers_list := make([]Buyer, 0)
-    for _, item := range root.DataOfDate {
-      for _, subitem := range item.Buyers {
-        subitem.DType = []string{"Buyer"}
-        buyers_list = append(buyers_list, subitem)
-      }
-    }
-    //fmt.Println(buyers_list)
-
-    // Resultado a retornar
-    w.Header().Set("Content-Type", "application/json")
-    //w.Write(res.Json)
-    finalData, err := json.Marshal(buyers_list)
-    if err != nil {
-      log.Fatal(err)
-    }
-    w.Write(finalData)
-    
-  } else {
-    
-    // Sin parámetro de fecha, la solicitud es inválida
-    w.Write([]byte("Invalid Request"))
-
-  }
-  
 }
 
 // Request Handler - GET /buyers
@@ -214,7 +112,7 @@ func BuyerCtx(next http.Handler) http.Handler {
 func (rs buyersResource) Get(w http.ResponseWriter, r *http.Request) {
   
   id := r.Context().Value("id").(string)
-  //fmt.Println(id)
+  fmt.Println("Capturando datos de comprador", id)
 
   // Estructura para decodificar datos recibidos
   type Root struct {

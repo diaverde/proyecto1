@@ -96,7 +96,7 @@ class _BuyersPageState extends State<BuyersPage> {
 
 // Función para capturar lista de compradores
 Future<List<Buyer>> fetchAllBuyers() async {
-  final url = 'https://damn.loca.lt/buyers';
+  final url = 'https://verde.loca.lt/buyers';
   final response = await http.get(Uri.parse(url));
   //print(response.body);
 
