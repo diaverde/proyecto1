@@ -7,7 +7,8 @@ import 'package:proyecto1_cliente/modelos.dart';
 /// Clase principal
 class BuyerInfoPage extends StatefulWidget {
   ///  Class Key
-  const BuyerInfoPage({Key? key}) : super(key: key);
+  const BuyerInfoPage({Key? key, required this.buyerID}) : super(key: key);
+  final String buyerID;
 
   @override
   _BuyerInfoPageState createState() => _BuyerInfoPageState();
@@ -19,7 +20,7 @@ class _BuyerInfoPageState extends State<BuyerInfoPage> {
   @override
   void initState() {
     super.initState();
-    futureBuyerData = fetchBuyer('e5fbad2f');
+    futureBuyerData = fetchBuyer(widget.buyerID);
   }
 
   @override
@@ -45,91 +46,133 @@ class _BuyerInfoPageState extends State<BuyerInfoPage> {
               future: futureBuyerData,
               builder: (context, snapshot) {
                 if (snapshot.hasData) {
-                  // Extraer datos del comprador
-                  Widget _userData = Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                    child: Column(
-                      children: [
-                        Text("Id: " + snapshot.data!.buyerData![0].id!),
-                        Text("Nombre: " + snapshot.data!.buyerData![0].name!),
-                        Text("Edad: " +
-                            snapshot.data!.buyerData![0].age.toString()),
-                      ],
-                    ),
-                  );
-                  // Extraer datos de compras
-                  List<Widget> purchasesData = <Widget>[];
-                  for (final item in snapshot.data!.prodData!) {
-                    Widget _singlePurchase = Column(
-                      children: [
-                        Text("Id: " + item.id!),
-                        Text("Nombre: " + item.name!),
-                        Text("Precio: " + item.price.toString()),
-                      ],
+                  if (snapshot.data!.buyerData!.isEmpty) {
+                    return Text(
+                        "No se encontraron datos para este ID de ususario");
+                  } else {
+                    // Extraer datos del comprador
+                    Widget _userData = Container(
+                      width: 250,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 2),
+                      margin: const EdgeInsets.symmetric(vertical: 5),
+                      decoration: BoxDecoration(
+                          border: Border.all(color: Colors.blueAccent)),
+                      child: Column(
+                        children: [
+                          Text("Id: " + snapshot.data!.buyerData![0].id!),
+                          Text("Nombre: " + snapshot.data!.buyerData![0].name!),
+                          Text("Edad: " +
+                              snapshot.data!.buyerData![0].age.toString()),
+                        ],
+                      ),
                     );
-                    purchasesData.add(_singlePurchase);
-                  }
-                  Widget _purchases = Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                    child: Column(
+                    // Extraer datos de compras
+                    List<Widget> purchasesData = <Widget>[];
+                    for (final item in snapshot.data!.prodData!) {
+                      Widget _singlePurchase = Container(
+                        width: 400,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 2),
+                        margin: const EdgeInsets.symmetric(vertical: 5),
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.blueAccent)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Id: " + item.id!),
+                            Text("Nombre: " + item.name!),
+                            Text("Precio: " + item.price.toString()),
+                          ],
+                        ),
+                      );
+                      purchasesData.add(_singlePurchase);
+                    }
+                    Widget _purchases = Column(
                       children: purchasesData,
-                    ),
-                  );
-                  // Extraer datos de otros compradores con misma IP
-                  List<Widget> moreBuyersData = <Widget>[];
-                  for (final item in snapshot.data!.otherBuyersData!) {
-                    Widget _singlePerson = Column(
-                      children: [
-                        Text("Id: " + item.id!),
-                        Text("Nombre: " + item.name!),
-                        Text("Edad: " + item.age.toString()),
-                      ],
                     );
-                    moreBuyersData.add(_singlePerson);
-                  }
-                  Widget _otherBuyers = Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                    child: Column(
+                    // Extraer datos de otros compradores con misma IP
+                    List<Widget> moreBuyersData = <Widget>[];
+                    for (final item in snapshot.data!.otherBuyersData!) {
+                      Widget _singlePerson = Container(
+                        width: 200,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 2),
+                        margin: const EdgeInsets.symmetric(vertical: 5),
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.blueAccent)),
+                        child: Column(
+                          children: [
+                            Text("Id: " + item.id!),
+                            Text("Nombre: " + item.name!),
+                            Text("Edad: " + item.age.toString()),
+                          ],
+                        ),
+                      );
+                      moreBuyersData.add(_singlePerson);
+                    }
+                    Widget _otherBuyers = Column(
                       children: moreBuyersData,
-                    ),
-                  );
-                  // Extraer datos de otros productos recomendados
-                  List<Widget> morePurchasesData = <Widget>[];
-                  for (final item in snapshot.data!.otherProdData!) {
-                    Widget _singlePurchase = Column(
-                      children: [
-                        Text("Id: " + item.id!),
-                        Text("Nombre: " + item.name!),
-                        Text("Precio: " + item.price.toString()),
-                      ],
                     );
-                    morePurchasesData.add(_singlePurchase);
-                  }
-                  Widget _otherProducts = Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                    child: Column(
+                    // Extraer datos de otros productos recomendados
+                    List<Widget> morePurchasesData = <Widget>[];
+                    for (final item in snapshot.data!.otherProdData!) {
+                      Widget _singlePurchase = Container(
+                        width: 400,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 2),
+                        margin: const EdgeInsets.symmetric(vertical: 5),
+                        decoration: BoxDecoration(
+                            border: Border.all(color: Colors.blueAccent)),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Id: " + item.id!),
+                            Text("Nombre: " + item.name!),
+                            Text("Precio: " + item.price.toString()),
+                          ],
+                        ),
+                      );
+                      morePurchasesData.add(_singlePurchase);
+                    }
+                    Widget _otherProducts = Column(
                       children: morePurchasesData,
-                    ),
-                  );
-                  return Column(children: [
-                    Text("Datos del comprador"),
-                    _userData,
-                    Divider(),
-                    Text("Historial de compras"),
-                    _purchases,
-                    Divider(),
-                    Text("Otros compradores desde su IP"),
-                    _otherBuyers,
-                    Divider(),
-                    Text("Otros productos recomendados"),
-                    _otherProducts,
-                  ]);
+                    );
+                    return Column(children: [
+                      Text(
+                        "Datos del comprador",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      _userData,
+                      Divider(),
+                      Text(
+                        "Historial de compras",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      _purchases,
+                      Divider(),
+                      Text(
+                        "Otros compradores desde su IP",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      _otherBuyers,
+                      Divider(),
+                      Text(
+                        "Otros productos recomendados",
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      _otherProducts,
+                    ]);
+                  }
                 } else if (snapshot.hasError) {
-                  return Text("${snapshot.error}");
+                  if (snapshot.error.toString().contains('No hay datos')) {
+                    return Text(
+                        "No se encontraron datos para este ID de ususario");
+                  } else {
+                    print(snapshot.error);
+                    return Text(
+                        'Error de conexión. Verifique e intente de nuevo.');
+                  }
                 }
                 // By default, show a loading spinner.
                 return CircularProgressIndicator();
@@ -161,8 +204,9 @@ Future<BuyerInfo>? fetchBuyer(String buyerID) async {
   //final url = 'http://www.haztudron.com/';
   final response = await http.get(Uri.parse(url + buyerID));
   //final response = await http.get(Uri.parse(url));
-  print(response.body);
+  //print(response.body);
 
+  /*
   final respons = '{'
       '"buyer_data": [{"id": "666", "name": "John Connor", "age": 23}],'
       '"prod_data": ['
@@ -178,21 +222,17 @@ Future<BuyerInfo>? fetchBuyer(String buyerID) async {
       '{"id": "469", "name": "Peanuts", "price": 3.0}'
       ']'
       '}';
-
+  */
   if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
     try {
       //return BuyerInfo.fromJson(json.decode(respons));
       return BuyerInfo.fromJson(json.decode(response.body));
     } catch (e) {
       print(e);
-      throw Exception('Falla al cargar comprador');
+      throw Exception('No hay datos de comprador');
     }
     //return BuyerInfo.fromJson(json.decode(response.body));
   } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
     throw Exception('Falla al cargar compradores');
   }
 }

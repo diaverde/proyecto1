@@ -104,8 +104,6 @@ Future<List<Buyer>> fetchAllBuyers() async {
   List<Buyer> allBuyers = <Buyer>[];
 
   if (response.statusCode == 200) {
-    // If the server did return a 200 OK response,
-    // then parse the JSON.
     final dataList = json.decode(response.body);
     if (dataList is List) {
       for (var i = 0; i < dataList.length; i++) {
@@ -116,8 +114,6 @@ Future<List<Buyer>> fetchAllBuyers() async {
     }
     return allBuyers;
   } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
     throw Exception('Falla al cargar compradores');
   }
 }

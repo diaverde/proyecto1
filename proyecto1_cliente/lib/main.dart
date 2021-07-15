@@ -14,11 +14,12 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'Proyecto Uno',
-        theme: ThemeData(
-          primarySwatch: Colors.purple,
-        ),
-        home: HomePage());
+      title: 'Proyecto Uno',
+      theme: ThemeData(
+        primarySwatch: Colors.purple,
+      ),
+      home: HomePage(),
+    );
   }
 }
 
@@ -33,6 +34,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   DateTime? selectedDate;
+  final buyerIDController = TextEditingController();
+  String? syncState;
 
   @override
   void initState() {
@@ -40,7 +43,23 @@ class _HomePageState extends State<HomePage> {
   }
 
   @override
+  void dispose() {
+    buyerIDController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    Widget _syncIndicator() {
+      if (syncState == 'Working') {
+        return CircularProgressIndicator();
+      } else if (syncState == 'Done') {
+        return Text('Datos sincronizados');
+      } else {
+        return Container();
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Proyecto Uno'),
@@ -143,10 +162,10 @@ class _HomePageState extends State<HomePage> {
                                 ((selectedDate!.millisecondsSinceEpoch) * 0.001)
                                     .round();
                             print(unixDate);
-                            final result = await synchronize(unixDate);
-                            if (result) {
-                              showSnackbar('Datos sincronizados', context);
-                            }
+                            checkSync(unixDate);
+                            setState(() {
+                              syncState = 'Working';
+                            });
                           }
                         },
                         child: const Text(
@@ -154,6 +173,7 @@ class _HomePageState extends State<HomePage> {
                           textAlign: TextAlign.center,
                         ),
                       ),
+                      _syncIndicator(),
                     ],
                   ),
                 ),
@@ -224,7 +244,12 @@ class _HomePageState extends State<HomePage> {
                           'Consulte por ID',
                           textAlign: TextAlign.left,
                         ),
-                        TextField(),
+                        TextField(
+                          decoration: InputDecoration(
+                              border: OutlineInputBorder(),
+                              hintText: 'ID de usuario'),
+                          controller: buyerIDController,
+                        ),
                       ],
                     ),
                   ),
@@ -234,12 +259,17 @@ class _HomePageState extends State<HomePage> {
                   alignment: Alignment.centerRight,
                   child: ElevatedButton(
                     onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BuyerInfoPage(),
-                        ),
-                      );
+                      if (buyerIDController.text.isEmpty) {
+                        showSnackbar('Ingrese un ID de usuario', context);
+                      } else {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                BuyerInfoPage(buyerID: buyerIDController.text),
+                          ),
+                        );
+                      }
                     },
                     child: const Text(
                       'Obtener datos\ndel usuario',
@@ -254,23 +284,40 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
+
+  void checkSync(int unixDate) async {
+    final result = await synchronize(unixDate);
+    if (result) {
+      showSnackbar('Datos sincronizados', context);
+      setState(() {
+        syncState = 'Done';  
+      });
+    } else {
+      showSnackbar(
+          'Error al sincronizar.\n'
+          'Intente de nuevo más tarde',
+          context);
+      setState(() {
+        syncState = null;
+      });
+    }
+  }
 }
 
 // Función para sincronizar base de datos
 Future<bool> synchronize(int unixTime) async {
-  final url = 'https://damn.loca.lt/sync/?date=';
-  final response = await http.get(Uri.parse(url + unixTime.toString()));
+  final url = 'https://verde.loca.lt/sync';
+  final data = '{"dateToSync" : ${unixTime.toString()}}';
+  final response = await http.post(Uri.parse(url), body: data);
   print(response.body);
 
   if (response.statusCode == 200) {
-    if (response.body.contains('Ok')) {
+    if (response.body.contains('Datos sincronizados')) {
       return true;
     } else {
       return false;
     }
   } else {
-    // If the server did not return a 200 OK response,
-    // then throw an exception.
     throw Exception('Falla al cargar compradores');
   }
 }
